@@ -1,120 +1,54 @@
-import sys
+def add(a, b):
+    return a + b
 
-def add(n1, n2):
-    return n1 + n2
+def subtract(a, b):
+    return a - b
 
-def subtract(n1, n2):
-    return n1 - n2
+def multiply(a, b):
+    return a * b
 
-def multiply(n1, n2):
-    return n1 * n2
+def divide(a, b):
+    if b == 0:
+        raise ZeroDivisionError("Cannot divide by zero.")
+    return a / b
 
-def divide(n1, n2):
-    if n2 == 0:
-        raise ZeroDivisionError("Cannot divide by zero")
-    return n1 / n2
-
-def get_float_input(prompt):
+def get_number(prompt):
     while True:
         try:
             return float(input(prompt))
         except ValueError:
             print("Invalid input. Please enter a valid number.")
 
-def get_operation():
-    print("Select operation:")
-    print("1. Add (+)")
-    print("2. Subtract (-)")
-    print("3. Multiply (*)")
-    print("4. Divide (/)")
-    
-    choice = input("Enter choice (1/2/3/4): ")
-    if choice in ['1', '2', '3', '4']:
-        return choice
-    else:
-        return None
-
 def main():
-    print("Welcome to the Simple Calculator")
+    print("Simple Calculator")
+    print("Operations: +, -, *, /")
+    print("Type 'q' to quit.")
     
     while True:
-        choice = get_operation()
-        
-        if choice is None:
-            print("Invalid choice. Please try again.")
-            continue
-            
-        # If valid choice, get numbers
-        # However, to make the flow cleaner, maybe ask for numbers first or inside the specific blocks?
-        # Standard flow: Op -> Num1 -> Num2 -> Result
-        
-        # Actually, get_operation is inside the loop, but getting numbers is better done conditionally or just straight after validation.
-        # Let's restructure slightly for better UX.
-        pass
-
-# Revised Main Logic
-def main():
-    print("=== Simple Calculator ===")
-    
-    while True:
-        print("\nSelect operation:")
-        print("1. Add (+)")
-        print("2. Subtract (-)")
-        print("3. Multiply (*)")
-        print("4. Divide (/)")
-        print("0. Exit")
-        
-        user_choice = input("Enter choice (1/2/3/4/0): ").strip()
-        
-        if user_choice == '0':
-            print("Goodbye!")
+        op = input("Enter operation (+, -, *, /) or 'q' to quit: ").strip().lower()
+        if op == 'q':
+            print("Exiting calculator. Goodbye!")
             break
-            
-        if user_choice not in ['1', '2', '3', '4']:
-            print("Invalid selection. Please choose a valid option.")
+        if op not in ('+', '-', '*', '/'):
+            print("Invalid operation. Please enter +, -, *, or /.")
             continue
             
-        # Get numbers
-        num1 = None
-        num2 = None
+        num1 = get_number("Enter first number: ")
+        num2 = get_number("Enter second number: ")
         
-        while num1 is None:
-            try:
-                num1 = float(input("Enter first number: "))
-            except ValueError:
-                print("Invalid input. Please enter a number.")
-        
-        while num2 is None:
-            try:
-                num2 = float(input("Enter second number: "))
-            except ValueError:
-                print("Invalid input. Please enter a number.")
-                
-        result = None
-        operator_symbol = ""
-        
-        if user_choice == '1':
-            result = add(num1, num2)
-            operator_symbol = "+"
-        elif user_choice == '2':
-            result = subtract(num1, num2)
-            operator_symbol = "-"
-        elif user_choice == '3':
-            result = multiply(num1, num2)
-            operator_symbol = "*"
-        elif user_choice == '4':
-            try:
+        try:
+            if op == '+':
+                result = add(num1, num2)
+            elif op == '-':
+                result = subtract(num1, num2)
+            elif op == '*':
+                result = multiply(num1, num2)
+            elif op == '/':
                 result = divide(num1, num2)
-                operator_symbol = "/"
-            except ZeroDivisionError as e:
-                print(f"Error: {e}")
-                # Continue to next iteration without displaying result
-                continue
-        
-        if result is not None:
-            # Formatting output to remove unnecessary .0 for integers if desired, 
-            # but float is fine for general calculator.
-            print(f"Result: {num1} {operator_symbol} {num2} = {result}")
+                
+            print(f"Result: {num1} {op} {num2} = {result}")
+        except ZeroDivisionError as e:
+            print(f"Error: {e}")
 
 if __name__ == "__main__":
     main()
