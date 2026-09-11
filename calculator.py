@@ -1,63 +1,69 @@
-def add(x, y):
-    return x + y
+import sys
 
-def subtract(x, y):
-    return x - y
+def add(a, b):
+    return a + b
 
-def multiply(x, y):
-    return x * y
+def subtract(a, b):
+    return a - b
 
-def divide(x, y):
-    if y == 0:
-        raise ZeroDivisionError("Cannot divide by zero")
-    return x / y
+def multiply(a, b):
+    return a * b
+
+def divide(a, b):
+    if b == 0:
+        raise ValueError("Cannot divide by zero.")
+    return a / b
 
 def get_number(prompt):
     while True:
         try:
             return float(input(prompt))
         except ValueError:
-            print("Invalid number. Please try again.")
+            print("Invalid input. Please enter a valid number.")
+
+def display_result(result):
+    # Display as integer if it's a whole number, otherwise float
+    if result.is_integer():
+        print(f"Result: {int(result)}")
+    else:
+        print(f"Result: {result}")
 
 def main():
     print("Simple Calculator")
-    print("Select operation:")
-    print("1. Add (+)")
-    print("2. Subtract (-)")
-    print("3. Multiply (*)")
-    print("4. Divide (/)")
-    print("5. Exit")
-
+    print("Operations: +, -, *, /")
+    print("Type 'quit' to exit.\n")
+    
     while True:
-        choice = input("\nEnter choice (1/2/3/4/5): ").strip()
-
-        if choice == '5':
-            print("Exiting calculator. Goodbye!")
-            break
-        elif choice in ('1', '2', '3', '4'):
+        try:
             num1 = get_number("Enter first number: ")
+            
+            while True:
+                op = input("Enter operation (+, -, *, /): ").strip()
+                if op in ("+", "-", "*", "/"):
+                    break
+                print("Invalid operation. Please enter +, -, *, or /.")
+                
             num2 = get_number("Enter second number: ")
-
+            
+            operations = {
+                "+": add,
+                "-": subtract,
+                "*": multiply,
+                "/": divide
+            }
+            
             try:
-                if choice == '1':
-                    result = add(num1, num2)
-                elif choice == '2':
-                    result = subtract(num1, num2)
-                elif choice == '3':
-                    result = multiply(num1, num2)
-                elif choice == '4':
-                    result = divide(num1, num2)
+                result = operations[op](num1, num2)
+                display_result(result)
+            except ValueError as e:
+                print(f"Error: {e}")
                 
-                print(f"Result: {num1} {get_op_symbol(choice)} {num2} = {result}")
-                
-            except ZeroDivisionError:
-                print("Error: Division by zero is not allowed.")
-        else:
-            print("Invalid input. Please select a valid option (1-5).")
-
-def get_op_symbol(choice):
-    symbols = {'1': '+', '2': '-', '3': '*', '4': '/'}
-    return symbols.get(choice, '')
+        except KeyboardInterrupt:
+            print("\nExiting calculator. Goodbye!")
+            sys.exit(0)
+        except EOFError:
+            print("\nExiting calculator. Goodbye!")
+            sys.exit(0)
 
 if __name__ == "__main__":
     main()
