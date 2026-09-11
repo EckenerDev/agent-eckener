@@ -1,128 +1,117 @@
 
 <think>
-The user wants a Python program that acts as a todo list manager.
-Key features required:
-1.  Add a todo.
-2.  Remove a todo.
-3.  List todos.
+The user wants a Python program to manage a todo list.
+It needs three functions: `add`, `remove`, and `list` (or a way to list items).
+It should be a complete program, likely with a simple interface (CLI loop) to use these functions.
+I should use standard library only.
 
-Constraint:
-- Python 3.
-- Standard library only.
-- Single markdown block.
-- Clean, robust, self-contained.
+Plan:
+1.  Define a class `TodoListManager` to encapsulate functionality.
+2.  Implement `__init__` to initialize the list (maybe load from a file? Or just keep it in memory? The prompt implies a simple program, usually in-memory is sufficient unless persistence is requested. I'll stick to in-memory for simplicity, but maybe add a basic text file persistence feature as a "nice to have" or just keep it simple. Let's stick to a simple in-memory implementation first, but maybe wrap it in a CLI loop).
+3.  Implement `add(item)`.
+4.  Implement `remove(item_id)` or `remove(item_name)`. ID is safer for duplicates.
+5.  Implement `list_todos()` (avoid shadowing built-in `list`).
+6.  Create a `main` function that loops and waits for user input to call these functions.
 
-Design:
-- I should probably use a simple data structure like a list or dictionary.
-- A dictionary might be better to store metadata like IDs or completion status, but the prompt specifically asked for add, remove, and list. I'll keep it simple but structured.
-- A CLI interface is appropriate for a "program".
-- I will implement a simple loop to allow the user to interact with the program.
+Refinement:
+- Use a list of dictionaries or objects to store items. `{id: ..., text: ..., completed: ...}`.
+- The prompt asks for "add, remove, and list functions".
+- I will create a clean class structure.
+- I will provide a command-line interface to test it.
 
-Implementation details:
-- Use a list to store todos.
-- `add( description )`
-- `remove( index )` or `remove( id )`
-- `list_todos()`
-
-Let's refine the data structure.
-Maybe a class `TodoManager` to encapsulate the logic.
-
-Attributes:
-- `_todos`: a list of dictionaries `{'id': 1, 'text': 'Buy milk', 'done': False}` or just strings. The prompt is simple ("add, remove, list"), so maybe just strings is sufficient, but IDs make removal safer (indices shift). Let's use a list of strings for simplicity, or a list of dicts for robustness. Given "robust" in instructions, I'll use a list of dicts with an auto-incrementing ID.
-
-Wait, if I want to be strictly "robust" and self-contained, I should handle inputs, empty lists, invalid inputs, etc.
-
-Functions requested:
-- `add`
-- `remove`
-- `list` (this is a keyword, so I'll name it `list_todos` or `show`).
-
-Let's draft the code.
+Let's write the code.
 
 ```python
 import sys
+import uuid
+from datetime import datetime
+
+class TodoItem:
+    def __init__(self, text):
+        self.id = str(uuid.uuid4())[:8] # Short ID
+        self.text = text
+        self.completed = False
+        self.created_at = datetime.now()
+
+    def __str__(self):
+        status = "x" if self.completed else " "
+        return f"[{status}] {self.text} (ID: {self.id})"
 
 class TodoListManager:
     def __init__(self):
         self.todos = []
-        self.current_id = 1
 
     def add(self, text):
-        if not text.strip():
-            print("Error: Todo text cannot be empty.")
-            return None
-        
-        todo = {
-            "id": self.current_id,
-            "text": text,
-            "is_completed": False
-        }
-        self.todos.append(todo)
-        self.current_id += 1
-        print(f"Added todo #{self.current_id - 1}: '{text}'")
-        return todo
+        if not text or not text.strip():
+            return {"success": False, "message": "Todo text cannot be empty."}
+        new_todo = TodoItem(text.strip())
+        self.todos.append(new_todo)
+        return {"success": True, "item": new_todo}
 
     def remove(self, todo_id):
-        # Find index
-        index_to_remove = None
+        # Find and remove by ID
         for i, todo in enumerate(self.todos):
-            if todo["id"] == todo_id:
-                index_to_remove = i
-                break
-        
-        if index_to_remove is not None:
-            removed = self.todos.pop(index_to_remove)
-            print(f"Removed todo #{removed['id']}: '{removed['text']}'")
-        else:
-            print(f"Error: Todo ID {todo_id} not found.")
+            if todo.id == todo_id:
+                removed_item = self.todos.pop(i)
+                return {"success": True, "item": removed_item}
+        return {"success": False, "message": "Todo not found."}
 
-    def list_todos(self):
-        if not self.todos:
-            print("Todo list is empty.")
-            return
+    def list(self):
+        # Return the list of todos
+        return self.todos
 
-        print("\n--- Todo List ---")
+    def mark_completed(self, todo_id):
         for todo in self.todos:
-            status = "[X]" if todo["is_completed"] else "[ ]"
-            print(f"#{todo['id']}: {status} {todo['text']}")
-        print("-----------------\n")
+            if todo.id == todo_id:
+                todo.completed = True
+                return {"success": True}
+        return {"success": False, "message": "Todo not found."}
+
+def print_menu():
+    print("\n--- Todo List Manager ---")
+    print("1. Add Todo")
+    print("2. Remove Todo")
+    print("3. List Todos")
+    print("4. Mark Completed")
+    print("5. Exit")
 
 def main():
     manager = TodoListManager()
     
-    print("Welcome to Todo List Manager")
-    print("Commands: 'add <text>', 'remove <id>', 'list', 'quit'")
-
     while True:
-        try:
-            command = input("\n> ").strip()
-            if not command:
+        print_menu()
+        choice = input("Choose an option: ").strip()
+
+        if choice == '1':
+            text = input("Enter todo description: ")
+            result = manager.add(text)
+            if result["success"]:
+                print(f"Added: {result['item'].text} (ID: {result['item'].id})")
+            else:
+                print(result["message"])
+
+        elif choice == '2':
+            # List available IDs first to make it easier? 
+            # Or just ask for ID.
+            current_todos = manager.list()
+            if not current_todos:
+                print("No todos to remove.")
                 continue
             
-            parts = command.split(maxsplit=1)
-            action = parts[0].lower()
-            args = parts[1] if len(parts) > 1 else None
-
-            if action == 'add':
-                if args:
-                    manager.add(args)
-                else:
-                    print("Usage: add <text>")
-            elif action == 'remove':
-                if args:
-                    try:
-                        todo_id = int(args)
-                        manager.remove(todo_id)
-                    except ValueError:
-                        print("Usage: remove <id> (number)")
-                else:
-                    print("Usage: remove <id>")
-            elif action == 'list':
-                manager.list_todos()
-            elif action in ('quit', 'exit'):
-                print("Goodbye!")
-                break
+            print("Current Todos:")
+            for t in current_todos:
+                print(t)
+            
+            todo_id = input("Enter Todo ID to remove: ").strip()
+            result = manager.remove(todo_id)
+            if result["success"]:
+                print(f"Removed: {result['item'].text}")
             else:
-                print("Unknown command. Try 'add', 'remove', 'list', or 'quit'.")
-        except (EOFError, KeyboardInterrupt):
-            print("\
+                print(result["message"])
+
+        elif choice == '3':
+            todos = manager.list()
+            if not todos:
+                print("Your todo list is empty.")
+            else:
+                print("\n
