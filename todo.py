@@ -1,67 +1,30 @@
-import sys
+import json
+import os
 
-class TodoListManager:
+class TodoList:
     def __init__(self):
         self.tasks = []
+        self.next_id = 1
 
-    def add(self, task):
-        if not task.strip():
-            print("Task cannot be empty.")
-            return False
+    def add(self, title):
+        task = {'id': self.next_id, 'title': title, 'done': False}
         self.tasks.append(task)
-        print(f"Added: '{task}'")
-        return True
+        self.next_id += 1
+        return task
 
-    def remove(self, index):
-        try:
-            idx = int(index)
-            if 0 <= idx < len(self.tasks):
-                removed_task = self.tasks.pop(idx)
-                print(f"Removed: '{removed_task}'")
+    def remove(self, task_id):
+        for task in self.tasks:
+            if task['id'] == task_id:
+                self.tasks.remove(task)
                 return True
-            else:
-                print(f"Error: Index {index} is out of range.")
-                return False
-        except ValueError:
-            print("Error: Invalid index. Please enter a number.")
-            return False
+        return False
 
-    def list_tasks(self):
-        if not self.tasks:
-            print("No tasks found.")
-            return
-        print("\n--- To-Do List ---")
-        for i, task in enumerate(self.tasks):
-            print(f"{i}. {task}")
-        print("------------------")
+    def list(self):
+        for task in self.tasks:
+            print(f"[{task['id']}] {task['title']} ({'Done' if task['done'] else 'Pending'})")
 
-    def run(self):
-        print("Welcome to the Todo List Manager!")
-        while True:
-            print("\nOptions:")
-            print("1. Add a task")
-            print("2. Remove a task")
-            print("3. List tasks")
-            print("0. Exit")
-            
-            choice = input("\nEnter your choice: ").strip()
-            
-            if choice == '1':
-                task = input("Enter task description: ")
-                self.add(task)
-            elif choice == '2':
-                self.list_tasks()
-                if self.tasks:
-                    index = input("Enter the number of the task to remove: ")
-                    self.remove(index)
-            elif choice == '3':
-                self.list_tasks()
-            elif choice == '0':
-                print("Exiting...")
-                break
-            else:
-                print("Invalid choice. Please try again.")
-
-if __name__ == "__main__":
-    manager = TodoListManager()
-    manager.run()
+# CLI Logic
+def main():
+    todo = TodoList()
+    while True:
+    # ... commands ...
