@@ -1,3 +1,5 @@
+import sys
+
 def add(x, y):
     return x + y
 
@@ -9,53 +11,42 @@ def multiply(x, y):
 
 def divide(x, y):
     if y == 0:
-        raise ValueError("Division by zero is not allowed.")
+        raise ZeroDivisionError("Cannot divide by zero")
     return x / y
 
 def main():
     print("Simple Calculator")
     print("Operations: +, -, *, /")
-    print("Type 'quit' to exit.\n")
+    print("Type 'q' to quit.")
+    
+    operations = {
+        '+': add,
+        '-': subtract,
+        '*': multiply,
+        '/': divide
+    }
     
     while True:
         try:
-            user_input = input("Enter expression (e.g., 5 + 3): ").strip()
-            if user_input.lower() in ('quit', 'exit', 'q'):
-                print("Exiting calculator. Goodbye!")
+            user_input = input("\nEnter expression (e.g., 10 + 5): ").strip()
+            
+            if user_input.lower() == 'q':
+                print("Exiting calculator.")
                 break
-            if not user_input:
-                continue
-                
+            
+            # Simple parsing logic
+            # We expect format: number operator number
+            # Split might be tricky if there are spaces or lack thereof. 
+            # Better to use regex or a robust split logic? 
+            # For a "simple" calculator, checking for operators in string is a start.
+            
             parts = user_input.split()
+            
             if len(parts) != 3:
-                print("Invalid format. Please use: number operator number (e.g., 10 / 2)\n")
-                continue
+                # Maybe the user didn't separate by spaces, e.g., "10+5"
+                # Let's try to parse using regex for robustness? 
+                # Or just try to locate the operator.
+                pass 
                 
-            a_str, op, b_str = parts
-            a = float(a_str)
-            b = float(b_str)
-            
-            if op == '+':
-                result = add(a, b)
-            elif op == '-':
-                result = subtract(a, b)
-            elif op == '*':
-                result = multiply(a, b)
-            elif op == '/':
-                result = divide(a, b)
-            else:
-                print(f"Unknown operator '{op}'. Please use +, -, *, or /\n")
-                continue
-                
-            print(f"Result: {result}\n")
-            
-        except ValueError as e:
-            if str(e) == "Division by zero is not allowed.":
-                print("Error: Division by zero is not allowed.\n")
-            else:
-                print(f"Error: Invalid number format. Please enter valid numbers.\n")
         except Exception as e:
-            print(f"An unexpected error occurred: {e}\n")
-
-if __name__ == "__main__":
-    main()
+            print(f"Error: {e}")
