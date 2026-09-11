@@ -1,69 +1,51 @@
-import sys
+import json
+import os
+from datetime import datetime
 
 class TodoManager:
-    def __init__(self):
-        self.todos = []
+    def __init__(self, filename='todo.json'):
+        self.filename = filename
+        self.tasks = self._load_tasks()
 
-    def add(self, text):
-        if not text.strip():
-            print("Error: Task description cannot be empty.")
-            return
-        self.todos.append(text.strip())
-        print(f"Added: {text.strip()}")
+    def _load_tasks(self):
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, 'r') as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                return []
+        return []
+
+    def _save_tasks(self):
+        with open(self.filename, 'w') as f:
+            json.dump(self.tasks, f, indent=4)
+
+    def add(self, description):
+        new_task = {
+            'id': len(self.tasks) + 1,
+            'description': description,
+            'status': 'pending',
+            'created_at': datetime.now().isoformat()
+        }
+        self.tasks.append(new_task)
+        self._save_tasks()
+        print(f"Task added: {description}")
 
     def remove(self, task_id):
-        try:
-            # User likely provides 1-based index
-            idx = int(task_id) - 1
-            if 0 <= idx < len(self.todos):
-                removed_task = self.todos.pop(idx)
-                print(f"Removed: {removed_task}")
-            else:
-                print(f"Error: Invalid task ID '{task_id}'.")
-        except ValueError:
-            print("Error: Task ID must be a number.")
+        task_id = int(task_id)
+        for i, task in enumerate(self.tasks):
+            if task['id'] == task_id:
+                removed_task = self.tasks.pop(i)
+                self._save_tasks()
+                print(f"Task removed: {removed_task['description']}")
+                return
+        print(f"Task with ID {task_id} not found.")
 
-    def list_items(self):
-        if not self.todos:
-            print("Todo list is empty.")
+    def list(self):
+        if not self.tasks:
+            print("Your todo list is empty.")
             return
-        
-        print(f"\n--- Todo List ({len(self.todos)} items) ---")
-        for i, task in enumerate(self.todos, 1):
-            print(f"{i}. {task}")
-        print("------------------------------\n")
-
-def main():
-    manager = TodoManager()
-    print("Welcome to Todo List Manager!")
-    print("Commands: add <task>, remove <id>, list, quit")
-    
-    while True:
-        try:
-            command = input(">> ").strip().lower()
-            if not command:
-                continue
-            
-            parts = command.split(maxsplit=1)
-            action = parts[0]
-            args = parts[1] if len(parts) > 1 else ""
-
-            if action == 'add':
-                manager.add(args)
-            elif action == 'remove':
-                manager.remove(args)
-            elif action == 'list':
-                manager.list_items()
-            elif action in ['quit', 'exit', 'q']:
-                print("Goodbye!")
-                break
-            else:
-                print("Unknown command. Use 'add', 'remove', 'list', or 'quit'.")
-        except KeyboardInterrupt:
-            print("\nExiting...")
-            break
-        except Exception as e:
-            print(f"Unexpected error: {e}")
-
-if __name__ == "__main__":
-    main()
+        print("Current Tasks:")
+        for task in self.tasks:
+            status_icon = "✓" if task['status'] == 'completed' else "○"
+            print(f"[{task['id']}] {status_icon} {task['description']}")
