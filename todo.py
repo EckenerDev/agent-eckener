@@ -1,74 +1,109 @@
-#!/usr/bin/env python3
-"""
-Todo List Manager
-A simple, robust command-line interface for managing a todo list.
-"""
+
+<think>
+The user wants a Python program that functions as a todo list manager.
+It needs to have three main functions:
+1. `add`: Add a new todo item.
+2. `remove`: Remove an existing todo item.
+3. `list`: List all current todo items.
+
+Constraints:
+- Senior Python programmer style (clean, robust, self-contained).
+- Python 3.
+- No external dependencies (standard library only).
+- Output in a single markdown python fenced block.
+
+Plan:
+1.  Define a class or a module structure to hold the state. A class `TodoListManager` is good for encapsulation.
+2.  Use a data structure like a list of dictionaries or a list of strings. To make it robust, maybe unique IDs or just strings. Let's stick to a simple list of strings for simplicity, or a list of dicts with `id`, `text`, and `completed` status to be more "senior" level. However, the prompt specifically asks for add, remove, and list.
+3.  Implement the `add` method. It should take a string and append it. Handle duplicates? Maybe just append.
+4.  Implement the `remove` method. It should take an identifier (index or text). Identifying by text is easier for a CLI script.
+5.  Implement the `list_` (avoid keyword `list`) method. It should print the items.
+6.  Add a simple Command Line Interface (CLI) loop to demonstrate it, as "Write a Python program" implies an executable script.
+7.  Use `sys` for command line arguments or input.
+8.  Add error handling (e.g., removing non-existent items).
+
+Refining the design:
+- Class `TodoApp`.
+- Attribute `items`: List[str].
+- Method `add_item(text)`.
+- Method `remove_item(text)`.
+- Method `list_items()`.
+- A `run()` method or `if __name__ == "__main__":` block acting as the UI.
+
+Let's make it slightly more robust by supporting indexing for removal, as text might be ambiguous.
+Actually, the simplest robust interpretation:
+- Add: `add("Buy milk")`
+- List: Prints `1. Buy milk`
+- Remove: `remove(1)` or `remove("Buy milk")`. Let's support removing by index for precision.
+
+Let's write the code.
+
+```python
+import sys
 
 class TodoList:
     def __init__(self):
-        self.todos = {}
-        self.next_id = 1
+        # Store tasks as a list of strings
+        self.tasks = []
 
     def add(self, task: str) -> None:
-        """Add a task to the list."""
-        if not task or not task.strip():
-            raise ValueError("Task description cannot be empty.")
-        
-        task_id = self.next_id
-        self.todos[task_id] = task.strip()
-        self.next_id += 1
-        print(f"Added task #{task_id}: {self.todos[task_id]}")
+        """Add a new task to the list."""
+        if not task.strip():
+            print("Error: Task cannot be empty.")
+            return
+        self.tasks.append(task.strip())
+        print(f"Added: '{task.strip()}'")
 
-    def remove(self, task_id: int) -> None:
-        """Remove a task by its ID."""
-        if task_id in self.todos:
-            removed_task = self.todos.pop(task_id)
-            print(f"Removed task #{task_id}: {removed_task}")
-        else:
-            print(f"Error: Task #{task_id} not found.")
-
-    def list_tasks(self) -> None:
-        """Display all tasks."""
-        if not self.todos:
-            print("The todo list is empty.")
+    def remove(self, index: int) -> None:
+        """Remove a task by its 1-based index."""
+        if not self.tasks:
+            print("The list is empty.")
             return
         
-        print("--- Todo List ---")
-        for task_id, task in self.todos.items():
-            print(f"#{task_id}: {task}")
-        print("-----------------")
+        # Adjust user's 1-based index to 0-based
+        if 1 <= index <= len(self.tasks):
+            removed_task = self.tasks.pop(index - 1)
+            print(f"Removed: '{removed_task}'")
+        else:
+            print(f"Error: Index {index} is out of range.")
+
+    def list_items(self) -> None:
+        """Print all tasks."""
+        if not self.tasks:
+            print("Your todo list is empty.")
+            return
+        
+        print("\n--- Todo List ---")
+        for i, task in enumerate(self.tasks, 1):
+            print(f"{i}. {task}")
+        print("-----------------\n")
 
 def main():
-    todo_list = TodoList()
+    todo_app = TodoList()
     
-    print("Welcome to the Todo List Manager!")
-    print("Commands: add, remove, list, quit")
+    print("Todo List Manager. Commands: add <text>, remove <index>, list, quit")
     
     while True:
-        command = input("\nEnter command: ").strip().lower()
-        
-        if command == 'add':
-            task = input("Enter task description: ")
-            try:
-                todo_list.add(task)
-            except ValueError as e:
-                print(f"Error: {e}")
-                
-        elif command == 'remove':
-            try:
-                task_id = int(input("Enter task ID to remove: "))
-                todo_list.remove(task_id)
-            except ValueError:
-                print("Error: Invalid ID format. Please enter a number.")
-                
-        elif command == 'list':
-            todo_list.list_tasks()
+        try:
+            user_input = input("\nEnter command > ").strip()
+            if not user_input:
+                continue
             
-        elif command == 'quit' or command == 'exit':
-            print("Goodbye!")
-            break
-        else:
-            print("Unknown command. Please use 'add', 'remove', 'list', or 'quit'.")
+            parts = user_input.split(maxsplit=1)
+            command = parts[0].lower()
+            argument = parts[1] if len(parts) > 1 else None
 
-if __name__ == "__main__":
-    main()
+            if command == 'add':
+                if argument:
+                    todo_app.add(argument)
+                else:
+                    print("Error: Please provide a task description.")
+            elif command == 'remove':
+                if argument:
+                    try:
+                        index = int(argument)
+                        todo_app.remove(index)
+                    except ValueError:
+                        print("Error: Please provide a valid number for the task index.")
+                else:
+                    print("Error: Please provide the index of the
