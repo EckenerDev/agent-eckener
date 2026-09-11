@@ -1,52 +1,59 @@
 import sys
 
-def add(x, y):
-    return x + y
+def add(a: float, b: float) -> float:
+    return a + b
 
-def subtract(x, y):
-    return x - y
+def subtract(a: float, b: float) -> float:
+    return a - b
 
-def multiply(x, y):
-    return x * y
+def multiply(a: float, b: float) -> float:
+    return a * b
 
-def divide(x, y):
-    if y == 0:
+def divide(a: float, b: float) -> float:
+    if b == 0:
         raise ZeroDivisionError("Cannot divide by zero")
-    return x / y
+    return a / b
+
+def get_number(prompt: str) -> float:
+    while True:
+        try:
+            return float(input(prompt))
+        except ValueError:
+            print("Invalid input. Please enter a number.")
 
 def main():
-    print("Simple Calculator")
-    print("Operations: +, -, *, /")
-    print("Type 'q' to quit.")
-    
     operations = {
+        'add': add,
         '+': add,
+        'subtract': subtract,
         '-': subtract,
+        'multiply': multiply,
         '*': multiply,
+        'divide': divide,
         '/': divide
     }
     
+    print("Simple Calculator")
+    print("Operations: add, subtract, multiply, divide")
+    print("Type 'quit' to exit.")
+    
     while True:
+        op = input("\nEnter operation (or 'quit'): ").strip().lower()
+        if op == 'quit':
+            print("Goodbye!")
+            break
+        if op not in operations:
+            print("Invalid operation.")
+            continue
+            
+        num1 = get_number("Enter first number: ")
+        num2 = get_number("Enter second number: ")
+        
         try:
-            user_input = input("\nEnter expression (e.g., 10 + 5): ").strip()
-            
-            if user_input.lower() == 'q':
-                print("Exiting calculator.")
-                break
-            
-            # Simple parsing logic
-            # We expect format: number operator number
-            # Split might be tricky if there are spaces or lack thereof. 
-            # Better to use regex or a robust split logic? 
-            # For a "simple" calculator, checking for operators in string is a start.
-            
-            parts = user_input.split()
-            
-            if len(parts) != 3:
-                # Maybe the user didn't separate by spaces, e.g., "10+5"
-                # Let's try to parse using regex for robustness? 
-                # Or just try to locate the operator.
-                pass 
-                
-        except Exception as e:
+            result = operations[op](num1, num2)
+            print(f"Result: {result}")
+        except ZeroDivisionError as e:
             print(f"Error: {e}")
+
+if __name__ == "__main__":
+    main()
