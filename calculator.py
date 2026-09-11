@@ -1,3 +1,5 @@
+import sys
+
 def add(x, y):
     return x + y
 
@@ -9,10 +11,7 @@ def multiply(x, y):
 
 def divide(x, y):
     if y == 0:
-        raise ZeroDivisionError("Cannot divide by zero")
+        raise ValueError("Cannot divide by zero")
     return x / y
 
-def main():
-    print("Simple Calculator")
-    while True:
-        # ... input logic ...
+# ... logic to drive it ...
