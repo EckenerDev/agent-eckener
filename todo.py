@@ -1,79 +1,128 @@
 
 <think>
-The user wants a Python program to manage a todo list.
-The requirements are:
-1.  Add a task.
-2.  Remove a task.
-3.  List tasks.
-4.  No external dependencies (standard library only).
-5.  Single python block.
-6.  Clean, robust, self-contained code.
+The user wants a Python program that acts as a todo list manager.
+Key features required:
+1.  Add a todo.
+2.  Remove a todo.
+3.  List todos.
 
-Design considerations:
--   **GUI vs CLI**: Usually, a CLI is preferred for simple text-based tasks unless specified otherwise. However, a simple GUI using `tkinter` (standard library) is also an option and often more user-friendly for "managers". Given the prompt is generic, a CLI is the safest bet for a "program", but a `tkinter` app feels more like a "manager". Let's stick to a robust CLI with a persistent storage (JSON) to make it useful, or just an in-memory solution if it's meant to be a simple script.
-    -   *Decision*: I will build a CLI application that uses `json` to persist data to a file, as that makes it a robust "manager" rather than just a temporary script. It adds value without external dependencies.
--   **Data Structure**: A list of dictionaries or strings. List of dictionaries allows for more metadata (completed status, timestamps), which is good practice.
--   **Storage**: A JSON file (`todo.json`).
--   **Functions**:
-    -   `load_todos()`: Load from file.
-    -   `save_todos()`: Save to file.
-    -   `add_todo(task)`: Add to list.
-    -   `remove_todo(task_index)`: Remove by index.
-    -   `list_todos()`: Print formatted list.
-    -   `main()`: Interactive loop.
+Constraint:
+- Python 3.
+- Standard library only.
+- Single markdown block.
+- Clean, robust, self-contained.
 
-Let's refine the "Robust" part:
--   Handle file not found (first run).
--   Handle invalid inputs (non-existent index).
--   Use `argparse` for command-line arguments? Or just an interactive prompt?
-    -   *Decision*: An interactive prompt is easier to demonstrate the `add/remove/list` functions clearly in a single run. However, using `argparse` is more "programmatic". The prompt asks for "functions", implying a usage like `todo add ...`.
-    -   Let's provide a CLI tool that accepts commands like `python todo.py add "Buy milk"`, `python todo.py list`, `python todo.py remove 1`. This is more professional.
+Design:
+- I should probably use a simple data structure like a list or dictionary.
+- A dictionary might be better to store metadata like IDs or completion status, but the prompt specifically asked for add, remove, and list. I'll keep it simple but structured.
+- A CLI interface is appropriate for a "program".
+- I will implement a simple loop to allow the user to interact with the program.
 
-Plan:
-1.  Import `json`, `os`, `argparse`, `sys`.
-2.  Define a data file path (in the same directory or a standard config folder). Let's stick to a local file `todo.json`.
-3.  Implement helper functions for data persistence.
-4.  Implement `add`, `remove`, `list` logic.
-5.  Set up `argparse` to handle subcommands.
+Implementation details:
+- Use a list to store todos.
+- `add( description )`
+- `remove( index )` or `remove( id )`
+- `list_todos()`
 
-Wait, if the user just wants a script that runs and manages a list, an interactive menu is also very standard for "Write a program that satisfies...".
-Let's look at the phrasing: "A todo list manager with add, remove, and list **functions**".
-This implies the code should expose these behaviors.
-I will write a script that supports both an interactive mode and a command-line mode, or just a clean command-line interface.
-Actually, a simple interactive loop is often less confusing for a general request than `subparsers` in argparse, but `argparse` is the standard way to write CLI tools in Python.
-Let's go with `argparse` as it's robust and standard.
+Let's refine the data structure.
+Maybe a class `TodoManager` to encapsulate the logic.
 
-Data structure:
-`[ {"id": 1, "text": "Buy milk", "done": False}, ... ]`
+Attributes:
+- `_todos`: a list of dictionaries `{'id': 1, 'text': 'Buy milk', 'done': False}` or just strings. The prompt is simple ("add, remove, list"), so maybe just strings is sufficient, but IDs make removal safer (indices shift). Let's use a list of strings for simplicity, or a list of dicts for robustness. Given "robust" in instructions, I'll use a list of dicts with an auto-incrementing ID.
 
-Features:
--   `add`: Takes a string. Appends to list. Saves.
--   `remove`: Takes an ID. Removes item. Saves.
--   `list`: Prints items.
+Wait, if I want to be strictly "robust" and self-contained, I should handle inputs, empty lists, invalid inputs, etc.
 
-Let's add a `complete` function? The prompt didn't ask for it, just add, remove, list. I'll stick to the scope but maybe mark removal as the only deletion method.
+Functions requested:
+- `add`
+- `remove`
+- `list` (this is a keyword, so I'll name it `list_todos` or `show`).
 
-Code Structure:
+Let's draft the code.
+
 ```python
-import json
-import os
 import sys
-import argparse
 
-TODO_FILE = "todo_list.json"
+class TodoListManager:
+    def __init__(self):
+        self.todos = []
+        self.current_id = 1
 
-def load_todos():
-    """Load todos from JSON file."""
-    if not os.path.exists(TODO_FILE):
-        return []
-    try:
-        with open(TODO_FILE, 'r') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return []
+    def add(self, text):
+        if not text.strip():
+            print("Error: Todo text cannot be empty.")
+            return None
+        
+        todo = {
+            "id": self.current_id,
+            "text": text,
+            "is_completed": False
+        }
+        self.todos.append(todo)
+        self.current_id += 1
+        print(f"Added todo #{self.current_id - 1}: '{text}'")
+        return todo
 
-def save_todos(todos):
-    """Save todos to JSON file."""
-    with open(TODO_FILE, 'w') as f:
-        json.dump(todos, f, indent=4)
+    def remove(self, todo_id):
+        # Find index
+        index_to_remove = None
+        for i, todo in enumerate(self.todos):
+            if todo["id"] == todo_id:
+                index_to_remove = i
+                break
+        
+        if index_to_remove is not None:
+            removed = self.todos.pop(index_to_remove)
+            print(f"Removed todo #{removed['id']}: '{removed['text']}'")
+        else:
+            print(f"Error: Todo ID {todo_id} not found.")
 
+    def list_todos(self):
+        if not self.todos:
+            print("Todo list is empty.")
+            return
+
+        print("\n--- Todo List ---")
+        for todo in self.todos:
+            status = "[X]" if todo["is_completed"] else "[ ]"
+            print(f"#{todo['id']}: {status} {todo['text']}")
+        print("-----------------\n")
+
+def main():
+    manager = TodoListManager()
+    
+    print("Welcome to Todo List Manager")
+    print("Commands: 'add <text>', 'remove <id>', 'list', 'quit'")
+
+    while True:
+        try:
+            command = input("\n> ").strip()
+            if not command:
+                continue
+            
+            parts = command.split(maxsplit=1)
+            action = parts[0].lower()
+            args = parts[1] if len(parts) > 1 else None
+
+            if action == 'add':
+                if args:
+                    manager.add(args)
+                else:
+                    print("Usage: add <text>")
+            elif action == 'remove':
+                if args:
+                    try:
+                        todo_id = int(args)
+                        manager.remove(todo_id)
+                    except ValueError:
+                        print("Usage: remove <id> (number)")
+                else:
+                    print("Usage: remove <id>")
+            elif action == 'list':
+                manager.list_todos()
+            elif action in ('quit', 'exit'):
+                print("Goodbye!")
+                break
+            else:
+                print("Unknown command. Try 'add', 'remove', 'list', or 'quit'.")
+        except (EOFError, KeyboardInterrupt):
+            print("\
