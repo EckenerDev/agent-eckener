@@ -1,79 +1,67 @@
-   import os
-   import shutil
-   import argparse
-   from pathlib import Path
-   import sys
+import os
+import shutil
+from pathlib import Path
 
-   def main():
-       parser = argparse.ArgumentParser(description="Organize files in a directory by extension.")
-       parser.add_argument("directory", nargs="?", default=".", help="Target directory to organize (default: current directory)")
-       parser.add_argument("--dry-run", action="store_true", help="Show what would be done without moving files")
-       parser.add_argument("--recursive", action="store_true", help="Process subdirectories recursively")
-       args = parser.parse_args()
+class FileOrganizer:
+    def __init__(self, source_dir, dry_run=False):
+        self.source_dir = Path(source_dir)
+        self.dry_run = dry_run
+        
+    def organize(self):
+        if not self.source_dir.is_dir():
+            print(f"Error: {self.source_dir} is not a valid directory.")
+            return
 
-       target_dir = Path(args.directory).resolve()
-       if not target_dir.is_dir():
-           print(f"Error: '{target_dir}' is not a valid directory.")
-           sys.exit(1)
+        # Iterate over files in the directory
+        files = [f for f in self.source_dir.iterdir() if f.is_file()]
+        
+        for file in files:
+            ext = file.suffix
+            # Normalize extension: strip the dot, make lowercase
+            ext_folder_name = ext[1:].lower() if ext else "no_extension"
+            
+            dest_dir = self.source_dir / ext_folder_name
+            self._ensure_dir(dest_dir)
+            
+            dest_file = dest_dir / file.name
+            
+            self._move_file(file, dest_file)
 
-       # Collect files
-       files_to_organize = []
-       if args.recursive:
-           iterator = target_dir.rglob("*")
-       else:
-           iterator = target_dir.iterdir()
+    def _ensure_dir(self, path):
+        if not self.dry_run:
+            path.mkdir(exist_ok=True)
+        else:
+            print(f"  [DRY-RUN] Would create directory: {path}")
 
-       for item in iterator:
-           if item.is_file() and not item.name.startswith('.'): # Skip hidden files for safety
-               files_to_organize.append(item)
+    def _move_file(self, src, dest):
+        # Check if file already exists in dest
+        if dest.exists():
+            # Handle collision
+            counter = 1
+            stem = dest.stem
+            while dest.exists():
+                dest = dest.with_name(f"{stem}_{counter}{dest.suffix}")
+                counter += 1
+        
+        print(f"Moving: {src.name} -> {dest.parent.name}/")
+        if not self.dry_run:
+            try:
+                shutil.move(str(src), str(dest))
+            except Exception as e:
+                print(f"Error moving {src}: {e}")
+        else:
+            print(f"  [DRY-RUN] Would move {src} to {dest}")
 
-       # Group by extension
-       ext_groups = {}
-       for file_path in files_to_organize:
-           ext = file_path.suffix.lower().lstrip('.') or "no_extension"
-           if ext not in ext_groups:
-               ext_groups[ext] = []
-           ext_groups[ext].append(file_path)
-
-       # Show summary
-       print(f"Found {len(files_to_organize)} file(s) to organize:")
-       for ext, files in sorted(ext_groups.items()):
-           print(f"  .{ext} ({len(files)} files):")
-           for f in files:
-               print(f"    - {f.name}")
-
-       if args.dry_run:
-           print("\n[Dry Run] No files were moved.")
-           return
-
-       # Move files
-       moved_count = 0
-       skipped_count = 0
-       for ext, files in ext_groups.items():
-           dest_dir = target_dir / ext
-           dest_dir.mkdir(exist_ok=True)
-
-           for file_path in files:
-               dest_path = dest_dir / file_path.name
-               try:
-                   if dest_path.exists():
-                       # Handle collision
-                       base = file_path.stem
-                       suffix = file_path.suffix
-                       counter = 1
-                       while dest_path.exists():
-                           new_name = f"{base}_{counter}{suffix}"
-                           dest_path = dest_dir / new_name
-                           counter += 1
-                   shutil.move(str(file_path), str(dest_path))
-                   print(f"Moved: {file_path.name} -> {dest_path.name}")
-                   moved_count += 1
-               except Exception as e:
-                   print(f"Failed to move {file_path.name}: {e}")
-                   skipped_count += 1
-
-       print(f"\nDone. Moved: {moved_count}, Skipped: {skipped_count}")
-
-   if __name__ == "__main__":
-       main()
-   
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Sort files by extension.")
+    parser.add_argument("directory", nargs="?", default=".", help="Directory to organize")
+    parser.add_argument("-y", "--yes", action='store_true', help="Execute moves (default is dry-run)")
+    
+    args = parser.parse_args()
+    
+    # If --yes is not passed, treat as dry run for safety
+    dry_run = not args.yes
+    
+    organizer = FileOrganizer(args.directory, dry_run)
+    organizer.organize()
