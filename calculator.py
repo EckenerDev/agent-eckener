@@ -1,55 +1,55 @@
-import sys
+   def add(a, b):
+       return a + b
 
-def add(x, y):
-    return x + y
+   def subtract(a, b):
+       return a - b
 
-def subtract(x, y):
-    return x - y
+   def multiply(a, b):
+       return a * b
 
-def multiply(x, y):
-    return x * y
+   def divide(a, b):
+       if b == 0:
+           raise ZeroDivisionError("Cannot divide by zero")
+       return a / b
 
-def divide(x, y):
-    if y == 0:
-        raise ValueError("Cannot divide by zero")
-    return x / y
+   def get_number(prompt):
+       while True:
+           try:
+               return float(input(prompt))
+           except ValueError:
+               print("Invalid input. Please enter a valid number.")
 
-def main():
-    while True:
-        print("\nSimple Calculator")
-        print("1. Add")
-        print("2. Subtract")
-        print("3. Multiply")
-        print("4. Divide")
-        print("5. Quit")
-        
-        choice = input("Select operation (1-5): ")
-        
-        if choice == '5':
-            print("Exiting calculator.")
-            break
-        
-        if choice not in ['1', '2', '3', '4']:
-            print("Invalid choice. Please try again.")
-            continue
-            
-        try:
-            num1 = float(input("Enter first number: "))
-            num2 = float(input("Enter second number: "))
-            
-            if choice == '1':
-                print(f"Result: {add(num1, num2)}")
-            elif choice == '2':
-                print(f"Result: {subtract(num1, num2)}")
-            elif choice == '3':
-                print(f"Result: {multiply(num1, num2)}")
-            elif choice == '4':
-                try:
-                    print(f"Result: {divide(num1, num2)}")
-                except ValueError as e:
-                    print(f"Error: {e}")
-        except ValueError:
-            print("Invalid input. Please enter numeric values.")
+   def main():
+       print("Simple Calculator")
+       print("Operations: +, -, *, /")
+       print("Type 'quit' to exit.\n")
 
-if __name__ == "__main__":
-    main()
+       while True:
+           op = input("Enter operation (+, -, *, /) or 'quit': ").strip()
+           if op.lower() == 'quit':
+               print("Goodbye!")
+               break
+
+           if op not in ('+', '-', '*', '/'):
+               print("Invalid operation. Please choose +, -, *, or /.\n")
+               continue
+
+           num1 = get_number("Enter first number: ")
+           num2 = get_number("Enter second number: ")
+
+           try:
+               if op == '+':
+                   result = add(num1, num2)
+               elif op == '-':
+                   result = subtract(num1, num2)
+               elif op == '*':
+                   result = multiply(num1, num2)
+               elif op == '/':
+                   result = divide(num1, num2)
+               print(f"Result: {result}\n")
+           except ZeroDivisionError:
+               print("Error: Division by zero is not allowed.\n")
+
+   if __name__ == "__main__":
+       main()
+   
