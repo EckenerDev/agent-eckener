@@ -1,6 +1,11 @@
 import os
-import sys
 import shutil
 import argparse
-from pathlib import Path
-from collections import defaultdict
+
+def organize_files(source_dir):
+    # logic here
+    pass
+
+if __name__ == "__main__":
+    # argparse setup
+    # call organize_files
