@@ -1,102 +1,108 @@
 
 <think>
-The user wants a Python program that organizes files by sorting them into directories based on their file extensions.
+Here's a thinking process:
 
-Key requirements:
-1.  **Functionality**: Look at files in a specified directory, read their extensions, and move them into subdirectories named after those extensions (e.g., `.jpg` files go to a `jpg` folder).
-2.  **Robustness**: Handle errors (file in use, permission denied, file not found). Handle file existence (if file already exists in destination). Handle edge cases (files without extensions).
-3.  **Self-contained**: Standard library only (`os`, `shutil`, `pathlib`).
-4.  **CLI**: It should be easy to use, ideally via command line arguments or a simple interactive prompt, but a clean CLI interface is best for a "program".
+1.  **Understand User Goal**: The user wants a Python program that acts as a "file organizer" that sorts files by their extension. It should be clean, robust, self-contained, use only standard library modules, and be wrapped in a single markdown Python code block.
 
-Plan:
-1.  Use `pathlib` for modern path manipulation.
-2.  Define a main function that takes a target directory.
-3.  Iterate through files in the directory.
-4.  Identify extension.
-5.  Create target folder (e.g., `.jpg` -> `Images/jpg` or just `jpg`). Let's stick to the extension name (e.g., `jpg`) or a category map. A simple approach is just the extension name (case-insensitive).
-6.  Move the file.
-7.  Add error handling (try-except blocks).
-8.  Add a dry-run mode so the user can see what *would* happen before actually moving files. This is crucial for file manipulation tools to prevent data loss.
+2.  **Key Requirements**:
+   - Sort files by extension
+   - Organize them (likely move/copy into folders named after the extension)
+   - Self-contained, Python 3 standard library only
+   - Robust (handle errors, skip files, handle missing directories, etc.)
+   - Clean code structure
 
-Refining the logic:
--   Input: Directory path.
--   Logic:
-    -   List files.
-    -   For each file:
-        -   Get suffix (e.g., `.pdf`). Strip the dot for folder name (`pdf`).
-        -   If no extension, maybe put in `Misc` or `NoExtension`.
-        -   Create folder if not exists.
-        -   Construct new path.
-        -   If file exists at new path:
-            -   Option A: Skip.
-            -   Option B: Rename with counter (`filename_1.pdf`).
-            -   Let's go with skipping or user prompt, but for a script, skipping with a warning or unique naming is safer. I'll implement a unique naming strategy (loop counter) to avoid overwriting.
-        -   Move file.
--   Output: Print actions taken.
+3.  **Core Functionality**:
+   - Take a target directory as input
+   - Scan files in that directory
+   - Get file extension for each file
+   - Create subdirectories named after the extension (e.g., `.txt`, `.jpg`, or without the dot: `txt`, `jpg`)
+   - Move files into corresponding subdirectories
+   - Handle edge cases: hidden files, files without extensions, existing files in destination, read-only files, etc.
+   - Provide clear feedback/logging
 
-Let's structure the code:
--   `organize_files(target_dir, dry_run=False)`
--   Argument parsing using `argparse`.
+4.  **Design Decisions**:
+   - Use `pathlib` for modern, clean path handling
+   - Use `shutil` for moving files
+   - Use `os` or `sys` for command-line arguments
+   - Handle extensions case-insensitively or normalize them (lowercase)
+   - Skip directories (except maybe the organized ones) and hidden files
+   - Handle files without extensions (put in a `no_extension` folder)
+   - Add dry-run option? Maybe not required, but good for robustness. I'll stick to basic move but add safety checks.
+   - Use `logging` for clean output
 
-Implementation details:
--   `os.walk` or `pathlib.Path.iterdir`? `iterdir` is fine for a single directory.
--   Handling extension: `path.suffix`.
--   Case sensitivity: Use `.lower()` for folder names.
--   Reserved characters in folder names: Extension is usually safe, but good to be aware.
+5.  **Implementation Steps**:
+   - Parse command line args (target directory)
+   - Validate directory exists and is readable
+   - Iterate through files in the directory (non-recursive first, or maybe recursive? I'll stick to non-recursive for simplicity, but can add recursive option if needed. I'll keep it simple: single directory)
+   - For each file:
+     - Get suffix/extension
+     - Normalize extension (lowercase, strip leading dot, handle empty)
+     - Create target subdirectory
+     - Move file (handle conflicts, permissions)
+   - Use `pathlib.Path` throughout
+   - Add try-except for robustness
+   - Print/log progress
 
-Let's write the code.
+   Let's draft the code mentally:
 
-```python
-import os
-import shutil
-import argparse
-from pathlib import Path
+   ```python
+   import sys
+   import shutil
+   import logging
+   from pathlib import Path
 
-def get_unique_path(dest_path):
-    """
-    If dest_path exists, generate a unique filename by appending a counter.
-    Example: file.jpg -> file_1.jpg -> file_2.jpg
-    """
-    if not dest_path.exists():
-        return dest_path
+   def setup_logging():
+       logging.basicConfig(
+           level=logging.INFO,
+           format='%(asctime)s - %(levelname)s - %(message)s'
+       )
 
-    stem = dest_path.stem
-    suffix = dest_path.suffix
-    parent = dest_path.parent
-    counter = 1
-    while True:
-        new_name = f"{stem}_{counter}{suffix}"
-        new_path = parent / new_name
-        if not new_path.exists():
-            return new_path
-        counter += 1
+   def organize_files(directory: str) -> None:
+       source_dir = Path(directory).resolve()
+       if not source_dir.is_dir():
+           logging.error(f"Directory does not exist or is not a directory: {source_dir}")
+           sys.exit(1)
 
-def organize_files(directory, dry_run=False):
-    dir_path = Path(directory)
-    
-    if not dir_path.exists() or not dir_path.is_dir():
-        print(f"Error: Directory '{directory}' does not exist or is not a directory.")
-        return
+       logging.info(f"Organizing files in: {source_dir}")
+       moved_count = 0
+       skipped_count = 0
 
-    # Map to keep track of created folders to avoid redundant checks? 
-    # Not strictly necessary, Path.exists check is fast.
-    
-    print(f"Scanning directory: {dir_path.resolve()}")
-    
-    files_moved = 0
-    
-    for item in dir_path.iterdir():
-        # Skip directories (we are organizing files into subdirs)
-        if item.is_dir():
-            continue
-            
-        # Get extension
-        extension = item.suffix
-        if not extension:
-            # Handle files without extension
-            ext_folder_name = "no_extension"
-            print(f"Skipping {item.name} (no extension) or moving to {ext_folder_name}? "
-                  "Log: Files without extensions will be moved to 'unsorted'.")
-            ext_folder_name = "unsorted"
-        else:
-            ext
+       # Get all files (non-directories) in the source directory
+       files = [f for f in source_dir.iterdir() if f.is_file() and not f.name.startswith('.')]
+
+       for file_path in files:
+           # Get extension, handle missing extension
+           ext = file_path.suffix.lower()
+           ext_folder_name = ext.lstrip('.') if ext else 'no_extension'
+
+           # Create destination directory
+           dest_dir = source_dir / ext_folder_name
+           if not dest_dir.is_dir():
+               try:
+                   dest_dir.mkdir(parents=True)
+                   logging.info(f"Created directory: {dest_dir}")
+               except OSError as e:
+                   logging.error(f"Failed to create directory {dest_dir}: {e}")
+                   continue
+
+           dest_path = dest_dir / file_path.name
+
+           # Handle naming conflicts
+           if dest_path.exists():
+               base = file_path.stem
+               suffix = file_path.suffix
+               counter = 1
+               while dest_path.exists():
+                   dest_path = dest_dir / f"{base}_{counter}{suffix}"
+                   counter += 1
+               logging.warning(f"File already exists, renamed to: {dest_path.name}")
+
+           try:
+               shutil.move(str(file_path), str(dest_path))
+               logging.info(f"Moved: {file_path.name} -> {dest_dir.name}/")
+               moved_count += 1
+           except shutil.Error as e:
+               logging.warning(f"Could not move {file_path.name}: {e}")
+               skipped_count += 1
+           except OSError as e:
+               logging.error(f"OS
