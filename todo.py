@@ -1,60 +1,74 @@
-import sys
+#!/usr/bin/env python3
+"""
+Todo List Manager
+A simple, robust command-line interface for managing a todo list.
+"""
 
-class TodoListManager:
+class TodoList:
     def __init__(self):
-        self.tasks = []
+        self.todos = {}
+        self.next_id = 1
 
-    def add(self, task):
-        self.tasks.append(task)
-        print(f"Added: '{task}'")
+    def add(self, task: str) -> None:
+        """Add a task to the list."""
+        if not task or not task.strip():
+            raise ValueError("Task description cannot be empty.")
+        
+        task_id = self.next_id
+        self.todos[task_id] = task.strip()
+        self.next_id += 1
+        print(f"Added task #{task_id}: {self.todos[task_id]}")
 
-    def remove(self, task_index):
-        try:
-            # User inputs usually 1-based, convert to 0-based
-            idx = int(task_index) - 1
-            if 0 <= idx < len(self.tasks):
-                removed_task = self.tasks.pop(idx)
-                print(f"Removed: '{removed_task}'")
-            else:
-                print("Invalid task number.")
-        except ValueError:
-            print("Please enter a valid number.")
+    def remove(self, task_id: int) -> None:
+        """Remove a task by its ID."""
+        if task_id in self.todos:
+            removed_task = self.todos.pop(task_id)
+            print(f"Removed task #{task_id}: {removed_task}")
+        else:
+            print(f"Error: Task #{task_id} not found.")
 
-    def list_tasks(self):
-        if not self.tasks:
-            print("No tasks in the list.")
+    def list_tasks(self) -> None:
+        """Display all tasks."""
+        if not self.todos:
+            print("The todo list is empty.")
             return
-        for i, task in enumerate(self.tasks, 1):
-            print(f"{i}. {task}")
+        
+        print("--- Todo List ---")
+        for task_id, task in self.todos.items():
+            print(f"#{task_id}: {task}")
+        print("-----------------")
 
 def main():
-    manager = TodoListManager()
+    todo_list = TodoList()
+    
+    print("Welcome to the Todo List Manager!")
+    print("Commands: add, remove, list, quit")
+    
     while True:
-        print("\n--- Todo List Manager ---")
-        print("1. Add task")
-        print("2. Remove task")
-        print("3. List tasks")
-        print("4. Exit")
+        command = input("\nEnter command: ").strip().lower()
         
-        choice = input("Enter your choice: ").strip()
-        
-        if choice == '1':
+        if command == 'add':
             task = input("Enter task description: ")
-            if task:
-                manager.add(task)
-            else:
-                print("Task description cannot be empty.")
-        elif choice == '2':
-            manager.list_tasks() # Show list so user knows what to remove
-            idx = input("Enter task number to remove: ").strip()
-            manager.remove(idx)
-        elif choice == '3':
-            manager.list_tasks()
-        elif choice == '4':
+            try:
+                todo_list.add(task)
+            except ValueError as e:
+                print(f"Error: {e}")
+                
+        elif command == 'remove':
+            try:
+                task_id = int(input("Enter task ID to remove: "))
+                todo_list.remove(task_id)
+            except ValueError:
+                print("Error: Invalid ID format. Please enter a number.")
+                
+        elif command == 'list':
+            todo_list.list_tasks()
+            
+        elif command == 'quit' or command == 'exit':
             print("Goodbye!")
             break
         else:
-            print("Invalid choice.")
+            print("Unknown command. Please use 'add', 'remove', 'list', or 'quit'.")
 
 if __name__ == "__main__":
     main()
