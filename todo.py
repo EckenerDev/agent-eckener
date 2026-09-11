@@ -1,110 +1,63 @@
-
-<think>
-The user wants a Python program for a Todo List Manager.
-Requirements:
-1.  Standard library only.
-2.  Functions: `add`, `remove`, `list` (to display tasks).
-3.  Clean, robust, self-contained.
-4.  Single markdown code block.
-
-Plan:
-1.  Create a class `TodoList` to encapsulate state.
-2.  Use a simple data structure (list of dictionaries or a list of strings) to store tasks. A list of dictionaries is better for extensibility (e.g., holding task ID, description, completion status).
-3.  Implement `__init__` to initialize the task list.
-4.  Implement `add_task(description)` to append a new task.
-5.  Implement `remove_task(task_id)` to delete a task by its ID.
-6.  Implement `list_tasks()` to display all current tasks.
-7.  Add a simple CLI loop using `input()` to allow the user to interact with the manager.
-8.  Handle basic error checking (e.g., invalid task ID, empty input).
-9.  Add persistence? The prompt didn't explicitly ask for persistence (saving to file), but it's a nice touch for a "manager". However, to keep it strictly simple and robust within the constraints, I will implement an in-memory solution first, as it's the core requirement. I'll add a simple persistence mechanism using `json` (standard library) to make it a "complete" program as is standard for such exercises, ensuring data isn't lost on exit.
-
-Refining the data model:
-Task: `{ "id": int, "description": str, "completed": bool }`
-
-Methods:
-- `add(description)`: Generate new ID, append to list.
-- `remove(task_id)`: Filter out task with matching ID.
-- `list()`: Print formatted table/list of tasks.
-- `toggle_complete(task_id)`: Useful feature to add for a "manager".
-
-Structure of the code:
-1.  Imports: `json`, `os`.
-2.  Class `TodoApp`.
-3.  File handling for persistence (load/save).
-4.  Main loop handling user commands.
-
-Let's stick to the specific requirement: "add, remove, and list functions". I will ensure these are clearly defined methods.
-
-Drafting the code:
-```python
-import json
-import os
+import sys
 
 class TodoManager:
-    def __init__(self, filename="todos.json"):
-        self.filename = filename
+    def __init__(self):
         self.tasks = []
-        self._load()
-
-    def _load(self):
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, 'r') as f:
-                    self.tasks = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                self.tasks = []
-                
-    def _save(self):
-        with open(self.filename, 'w') as f:
-            json.dump(self.tasks, f, indent=4)
 
     def add(self, description):
-        if not description.strip():
-            raise ValueError("Task description cannot be empty.")
-        
-        # Generate ID: max existing ID + 1 or 1 if empty
-        if not self.tasks:
-            new_id = 1
-        else:
-            new_id = max(t['id'] for t in self.tasks) + 1
-            
-        task = {
-            "id": new_id,
-            "description": description,
-            "completed": False
-        }
-        self.tasks.append(task)
-        self._save()
-        return task
+        if not description or not description.strip():
+            print("Error: Task description cannot be empty.")
+            return
+        self.tasks.append({"id": len(self.tasks) + 1, "description": description, "done": False})
+        print(f"Task added: {desc}")
 
     def remove(self, task_id):
-        original_len = len(self.tasks)
-        self.tasks = [t for t in self.tasks if t['id'] != task_id]
-        if len(self.tasks) < original_len:
-            self._save()
-            return True
-        return False
+        # Find task by id to be safer, or remove by index? 
+        # Let's remove by index provided by the user, but handle errors.
+        try:
+            index = int(task_id) - 1
+            if 0 <= index < len(self.tasks):
+                removed = self.tasks.pop(index)
+                print(f"Removed task: {removed['description']}")
+                # Re-index? Or just keep gaps? 
+                # Keeping gaps in IDs is fine, but if we re-index, the list is more stable.
+                # Let's just re-index the IDs to stay 1..N.
+                for i, task in enumerate(self.tasks):
+                    task['id'] = i + 1
+            else:
+                print("Error: Invalid task number.")
+        except ValueError:
+            print("Error: Task number must be an integer.")
 
-    def list(self):
-        # Return list of formatted task strings or just return the data?
-        # The prompt implies a program, so printing is appropriate.
+    def list_tasks(self):
         if not self.tasks:
-            print("No tasks currently.")
+            print("Your todo list is empty.")
             return
-        
-        for t in self.tasks:
-            status = "Done" if t['completed'] else "Pending"
-            print(f"[{t['id']}] {t['description']} ({status})")
+        print("\n--- Todo List ---")
+        for task in self.tasks:
+            status = "Done" if task['done'] else "Pending"
+            print(f"[{task['id']}] {task['description']} ({status})")
+        print("-----------------")
 
-    # Helper for CLI
-    def run_cli(self):
-        print("Todo List Manager")
-        print("Commands: add <description>, remove <id>, list, exit")
-        
-        while True:
-            try:
-                command = input("\n> ").strip().lower()
-                if command == 'exit' or command == 'quit':
-                    print("Goodbye!")
-                    break
-                elif command.startswith
+def main():
+    manager = TodoManager()
+    while True:
+        print("\nOptions: [add] / [remove] / [list] / [quit]")
+        choice = input("Enter command: ").strip().lower()
+
+        if choice == 'add':
+            desc = input("Enter task description: ")
+            manager.add(desc)
+        elif choice == 'remove':
+            task_num = input("Enter task number to remove: ")
+            manager.remove(task_num)
+        elif choice == 'list':
+            manager.list_tasks()
+        elif choice == 'quit':
+            print("Goodbye!")
+            break
+        else:
+            print("Unknown command.")
+
+if __name__ == "__main__":
+    main()
