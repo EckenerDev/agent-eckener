@@ -1,56 +1,60 @@
 def add(x, y):
+    """Return the sum of x and y."""
     return x + y
 
 def subtract(x, y):
+    """Return the difference of x and y."""
     return x - y
 
 def multiply(x, y):
+    """Return the product of x and y."""
     return x * y
 
 def divide(x, y):
+    """Return the division of x by y."""
     if y == 0:
         return "Error: Division by zero"
     return x / y
 
 def main():
     print("Simple Calculator")
-    print("Select operation:")
-    print("1. Add")
-    print("2. Subtract")
-    print("3. Multiply")
-    print("4. Divide")
-    print("5. Quit")
+    print("Operations:")
+    print("1. Add (+)")
+    print("2. Subtract (-)")
+    print("3. Multiply (*)")
+    print("4. Divide (/)")
 
     while True:
-        choice = input("\nEnter choice (1-5): ")
-        
-        if choice == '5':
-            print("Exiting calculator.")
+        print("\nSelect operation (1-4) or 'q' to quit:")
+        choice = input("> ")
+
+        if choice.lower() == 'q':
+            print("Goodbye!")
             break
         
         if choice not in ['1', '2', '3', '4']:
-            print("Invalid choice. Please select a valid option.")
+            print("Invalid choice. Please select 1-4.")
             continue
 
         try:
             num1 = float(input("Enter first number: "))
             num2 = float(input("Enter second number: "))
         except ValueError:
-            print("Invalid input. Please enter numbers.")
+            print("Invalid input. Please enter a number.")
             continue
 
+        result = 0
+        
         if choice == '1':
-            print(f"Result: {add(num1, num2)}")
+            result = add(num1, num2)
         elif choice == '2':
-            print(f"Result: {subtract(num1, num2)}")
+            result = subtract(num1, num2)
         elif choice == '3':
-            print(f"Result: {multiply(num1, num2)}")
+            result = multiply(num1, num2)
         elif choice == '4':
             result = divide(num1, num2)
-            if isinstance(result, str): # Checking for error message
-                print(result)
-            else:
-                print(f"Result: {result}")
+            
+        print(f"Result: {result}")
 
 if __name__ == "__main__":
     main()
