@@ -1,67 +1,64 @@
 import sys
 
-class TodoList:
+class TodoManager:
     def __init__(self):
         self.tasks = []
 
-    def add(self, description):
-        if not description.strip():
+    def add_task(self, description):
+        if description:
+            self.tasks.append(description)
+            print(f"Task added: {description}")
+        else:
             print("Task description cannot be empty.")
-            return False
-        self.tasks.append(description.strip())
-        print(f"Added task: '{description.strip()}'")
-        return True
 
-    def remove(self, index):
-        try:
-            idx = int(index)
-            if 0 <= idx < len(self.tasks):
-                removed_task = self.tasks.pop(idx)
-                print(f"Removed task: '{removed_task}'")
-            else:
-                print(f"Index {idx} is out of range.")
-        except ValueError:
-            print("Invalid index. Please enter a number.")
-
-    def show(self):
+    def list_tasks(self):
         if not self.tasks:
             print("Todo list is empty.")
             return
-        print("\n--- Todo List ---")
-        for i, task in enumerate(self.tasks):
-            print(f"[{i}] {task}")
-        print("-----------------\n")
+        print("\nYour Todo List:")
+        for index, task in enumerate(self.tasks, 1):
+            print(f"{index}. {task}")
+
+    def remove_task(self, task_index):
+        try:
+            # Convert input to int, check if it's a valid index (1-based)
+            idx = int(task_index)
+            if 1 <= idx <= len(self.tasks):
+                removed_task = self.tasks.pop(idx - 1)
+                print(f"Task removed: {removed_task}")
+            else:
+                print(f"Invalid task number. Please choose a number between 1 and {len(self.tasks)}.")
+        except ValueError:
+            print("Please enter a valid number.")
 
 def main():
-    todo = TodoList()
+    manager = TodoManager()
+    print("Welcome to the Todo List Manager!")
+    
     while True:
-        print("\nCommands: 'add <task>', 'remove <index>', 'list', 'quit'")
-        user_input = input("> ").strip()
+        print("\nOptions:")
+        print("1. Add Task")
+        print("2. Remove Task")
+        print("3. List Tasks")
+        print("4. Exit")
         
-        if not user_input:
-            continue
-            
-        parts = user_input.split(' ', 1) # Split into command and rest
-        command = parts[0].lower()
-        argument = parts[1] if len(parts) > 1 else ""
-
-        if command == 'add':
-            if argument:
-                todo.add(argument)
-            else:
-                print("Usage: add <task description>")
-        elif command == 'remove' or command == 'delete':
-            if argument:
-                todo.remove(argument)
-            else:
-                print("Usage: remove <task index>")
-        elif command == 'list' or command == 'show' or command == 'l':
-            todo.show()
-        elif command == 'quit' or command == 'exit' or command == 'q':
+        choice = input("Enter your choice (1-4): ").strip()
+        
+        if choice == '1':
+            task_desc = input("Enter task description: ").strip()
+            manager.add_task(task_desc)
+        elif choice == '2':
+            manager.list_tasks() # Show list so user knows indices
+            if manager.tasks:
+                task_num = input("Enter task number to remove: ").strip()
+                manager.remove_task(task_num)
+        elif choice == '3':
+            manager.list_tasks()
+        elif choice == '4':
             print("Goodbye!")
             break
         else:
-            print("Unknown command.")
+            print("Invalid choice. Please try again.")
 
 if __name__ == "__main__":
     main()
